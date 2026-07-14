@@ -136,12 +136,14 @@ def load_table(cur, table, fileobj):
     # NULL '' turns every empty field into NULL, but num.coreg is NOT NULL
     # DEFAULT '' and is legitimately blank on most rows (it's only set for
     # co-registrant/subsidiary facts). FORCE NOT NULL keeps it as '' instead,
-    # which requires CSV format; QUOTE is set to a byte that never appears in
-    # the source data so CSV quoting semantics don't otherwise kick in.
+    # which requires CSV format. Some rows (e.g. BDC schedule-of-investments
+    # `segments` values) contain embedded tabs and are wrapped by SEC in real
+    # double quotes, so we rely on standard CSV quote parsing (the default
+    # QUOTE '"') rather than disabling it.
     force_not_null = ", FORCE_NOT_NULL (coreg)" if table == "num" else ""
     cur.copy_expert(
         f"COPY {staging} ({col_list}) FROM STDIN WITH (FORMAT csv, "
-        f"DELIMITER E'\\t', NULL '', QUOTE E'\\x01', HEADER true{force_not_null})",
+        f"DELIMITER E'\\t', NULL '', HEADER true{force_not_null})",
         fileobj,
     )
     if table in REFERENCES_SUB:
