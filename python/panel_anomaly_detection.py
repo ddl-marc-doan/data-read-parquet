@@ -213,6 +213,11 @@ def compute_benford(df, min_obs):
 
 def run_anomaly_detection(df, min_benford_obs):
     start = time.perf_counter()
+    # num.value is NUMERIC in Postgres and round-trips through Parquet as
+    # decimal128, so psycopg2/pyarrow both hand back python Decimal objects.
+    # Decimal deliberately rejects arithmetic with plain floats (the z/m-score
+    # formulas multiply by float coefficients), so normalize to float64 here.
+    df = df.assign(value=df["value"].astype(float))
     wide = build_panel(df)
     wide = compute_altman_z(wide)
     wide = compute_beneish_m(wide)
