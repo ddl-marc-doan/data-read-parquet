@@ -56,6 +56,12 @@ TABLE_COLUMNS = {
 # load order matters: sub/tag before num/pre because of foreign keys
 LOAD_ORDER = ["sub", "tag", "num", "pre"]
 
+# num/pre reference sub(adsh), but a quarter's num.txt/pre.txt occasionally
+# cite an adsh that quarter's own sub.txt doesn't include (SEC's sub.txt
+# filtering criteria don't perfectly line up with num.txt/pre.txt) -- skip
+# those orphaned rows at merge time instead of aborting the whole quarter.
+REFERENCES_SUB = {"num", "pre"}
+
 
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__)
@@ -138,9 +144,21 @@ def load_table(cur, table, fileobj):
         f"DELIMITER E'\\t', NULL '', QUOTE E'\\x01', HEADER true{force_not_null})",
         fileobj,
     )
+    if table in REFERENCES_SUB:
+        cur.execute(
+            f"SELECT count(*) FROM {staging} st "
+            f"WHERE NOT EXISTS (SELECT 1 FROM sub s WHERE s.adsh = st.adsh)"
+        )
+        orphans = cur.fetchone()[0]
+        if orphans:
+            print(f"    {orphans} rows in {table}.txt reference an adsh "
+                  f"not in sub, skipping")
+        where_clause = " WHERE EXISTS (SELECT 1 FROM sub s WHERE s.adsh = st.adsh)"
+    else:
+        where_clause = ""
     cur.execute(
-        f"INSERT INTO {table} ({col_list}) SELECT {col_list} FROM {staging} "
-        f"ON CONFLICT DO NOTHING"
+        f"INSERT INTO {table} ({col_list}) SELECT {col_list} FROM {staging} st"
+        f"{where_clause} ON CONFLICT DO NOTHING"
     )
     cur.execute(f"SELECT count(*) FROM {staging}")
     return cur.fetchone()[0]
