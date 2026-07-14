@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS num (
     ddate       DATE          NOT NULL,
     qtrs        SMALLINT      NOT NULL,
     uom         VARCHAR(20)   NOT NULL,
+    segments    TEXT,
     coreg       VARCHAR(256)  NOT NULL DEFAULT '',
     value       NUMERIC,
     footnote    TEXT,
@@ -170,6 +171,8 @@ def create_schema(args):
     try:
         with conn.cursor() as cur:
             cur.execute(SCHEMA_DDL)
+            # backfill for databases created before the `segments` column existed
+            cur.execute("ALTER TABLE num ADD COLUMN IF NOT EXISTS segments TEXT")
 
             # One partition per calendar year, plus a catch-all default
             # partition for any ddate outside the configured range.

@@ -44,8 +44,8 @@ TABLE_COLUMNS = {
         "tlabel", "doc",
     ],
     "num": [
-        "adsh", "tag", "version", "ddate", "qtrs", "uom", "coreg", "value",
-        "footnote",
+        "adsh", "tag", "version", "ddate", "qtrs", "uom", "segments", "coreg",
+        "value", "footnote",
     ],
     "pre": [
         "adsh", "report", "line", "stmt", "inpth", "rfile", "tag", "version",
