@@ -16,6 +16,7 @@ Usage:
 """
 import argparse
 import glob
+import re
 import time
 
 import pandas as pd
@@ -29,6 +30,14 @@ def resolve_paths(path_spec):
     """Expand a wildcard pattern (e.g. 'num/year=*/num.parquet') to a list of
     files; otherwise return the path unchanged (a single file or a directory,
     which pandas/pyarrow already knows how to read as-is)."""
+    # Unlike a shell or R's Sys.glob(), Python's glob module does not treat
+    # backslash as an escape character -- "\=" is matched as a literal
+    # backslash followed by "=", which never matches real paths (e.g.
+    # Hive-style "year=2020" partition directories have no backslash).
+    # Job schedulers/shells commonly backslash-escape "=" defensively, so
+    # unescape any "\X" -> "X" before matching, mirroring real glob(3).
+    path_spec = re.sub(r"\\(.)", r"\1", path_spec)
+
     if not any(c in path_spec for c in GLOB_CHARS):
         return path_spec
 
