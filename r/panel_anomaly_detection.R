@@ -64,10 +64,10 @@ coalesce_zero <- function(x) ifelse(is.na(x), 0, x)
 
 parse_cli_args <- function() {
   option_list <- list(
-    make_option("--host", default = "localhost"),
+    make_option("--host", default = Sys.getenv("PG_DB_HOST", unset = "localhost")),
     make_option("--port", type = "integer", default = 5432),
     make_option("--user", default = "postgres"),
-    make_option("--password", default = "postgres"),
+    make_option("--password", default = Sys.getenv("PG_DB_PW", unset = "postgres")),
     make_option("--dbname", default = "sec_financial_statements"),
     make_option("--form", default = "10-K", help = "Filing form type to analyze"),
     make_option("--min-benford-obs", type = "integer", default = 30,

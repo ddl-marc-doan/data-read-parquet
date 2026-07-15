@@ -43,10 +43,10 @@ NON_PARTITIONED_TABLES <- c("sub", "tag", "pre")
 
 parse_cli_args <- function() {
   option_list <- list(
-    make_option("--host", default = "localhost"),
+    make_option("--host", default = Sys.getenv("PG_DB_HOST", unset = "localhost")),
     make_option("--port", type = "integer", default = 5432),
     make_option("--user", default = "postgres"),
-    make_option("--password", default = "postgres"),
+    make_option("--password", default = Sys.getenv("PG_DB_PW", unset = "postgres")),
     make_option("--dbname", default = "sec_financial_statements"),
     make_option("--output-dir", type = "character",
                 help = "Root directory to write Parquet files into"),

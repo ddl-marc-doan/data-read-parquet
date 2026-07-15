@@ -18,6 +18,7 @@ Usage:
   python panel_anomaly_detection.py --dbname sec_financial_statements --top-n 25
 """
 import argparse
+import os
 import time
 
 import numpy as np
@@ -59,10 +60,10 @@ BENEISH_MANIPULATION_THRESHOLD = -2.22
 
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--host", default="localhost")
+    p.add_argument("--host", default=os.environ.get("PG_DB_HOST", "localhost"))
     p.add_argument("--port", type=int, default=5432)
     p.add_argument("--user", default="postgres")
-    p.add_argument("--password", default="postgres")
+    p.add_argument("--password", default=os.environ.get("PG_DB_PW", "postgres"))
     p.add_argument("--dbname", default="sec_financial_statements")
     p.add_argument("--form", default="10-K", help="Filing form type to analyze")
     p.add_argument("--min-benford-obs", type=int, default=30,
