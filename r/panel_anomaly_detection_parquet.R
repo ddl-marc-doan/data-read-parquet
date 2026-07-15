@@ -21,23 +21,37 @@
 #       --num-path "./sec_data/parquet/num/year=*/num.parquet" \
 #       --sub-path "./sec_data/parquet/sub/*.parquet"
 
-suppressPackageStartupMessages({
-  library(arrow)
-  library(dplyr)
-  library(optparse)
-})
-
-get_script_dir <- function() {
+script_dir <- function() {
   cmd_args <- commandArgs(trailingOnly = FALSE)
   file_arg <- grep("^--file=", cmd_args, value = TRUE)
   if (length(file_arg) == 1) return(dirname(normalizePath(sub("^--file=", "", file_arg))))
   getwd()
 }
 
+# Install renv (if missing) and restore the exact package versions pinned in
+# r/renv.lock before loading anything, so the analysis always runs against a
+# known-good dependency set.
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv", repos = "https://cloud.r-project.org")
+}
+renv::restore(
+  project = script_dir(),
+  lockfile = file.path(script_dir(), "renv.lock"),
+  prompt = FALSE
+)
+
+suppressPackageStartupMessages({
+  library(arrow)
+  library(dplyr)
+  library(optparse)
+})
+
 # brings in build_panel, compute_altman_z, compute_beneish_m, compute_benford,
 # run_anomaly_detection, INSTANT_TAGS/DURATION_TAGS, etc. Its own main() is
-# guarded by is_main() and will not run when sourced from here.
-source(file.path(get_script_dir(), "panel_anomaly_detection.R"))
+# guarded by is_main() and will not run when sourced from here. (Its renv
+# bootstrap above will also re-run harmlessly — renv::restore() is a no-op
+# once the lockfile is already satisfied.)
+source(file.path(script_dir(), "panel_anomaly_detection.R"))
 
 resolve_paths <- function(path_spec) {
   if (!grepl("[*?\\[]", path_spec)) return(path_spec)

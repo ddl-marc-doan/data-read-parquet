@@ -32,6 +32,25 @@
 #   Rscript export_to_parquet.R --dbname sec_financial_statements \
 #       --output-dir ./sec_data/parquet
 
+script_dir <- function() {
+  cmd_args <- commandArgs(trailingOnly = FALSE)
+  file_arg <- grep("^--file=", cmd_args, value = TRUE)
+  if (length(file_arg) == 1) return(dirname(normalizePath(sub("^--file=", "", file_arg))))
+  getwd()
+}
+
+# Install renv (if missing) and restore the exact package versions pinned in
+# r/renv.lock before loading anything, so the export always runs against a
+# known-good dependency set.
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv", repos = "https://cloud.r-project.org")
+}
+renv::restore(
+  project = script_dir(),
+  lockfile = file.path(script_dir(), "renv.lock"),
+  prompt = FALSE
+)
+
 suppressPackageStartupMessages({
   library(DBI)
   library(RPostgres)
